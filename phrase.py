@@ -1,8 +1,8 @@
 """
 BIP39 24-word mnemonic generator bot.
 
-Sends a freshly generated, cryptographically random 24-word BIP39
-seed phrase as a .txt file whenever you send /generate (or /start).
+Sends a .txt file of freshly generated, cryptographically random
+24-word BIP39 seed phrases (one per line) whenever you send /generate.
 
 Setup:
     pip install pyTelegramBotAPI mnemonic
@@ -10,8 +10,7 @@ Setup:
     1. Get a bot token from @BotFather on Telegram.
     2. Paste it into BOT_TOKEN below.
     3. Run: python3 bip39_bot.py
-    4. Message your bot /generate on Telegram (or /generate 500 for
-       500 phrases in one file, up to MAX_PHRASES).
+    4. Message your bot /generate on Telegram.
 
 Notes:
 - Uses the official `mnemonic` library, which uses the standard
@@ -20,6 +19,8 @@ Notes:
 - 24 words = 256 bits of entropy + checksum, per the BIP39 spec, so
   every phrase generated is a fully valid mnemonic (not just 24
   random words strung together).
+- Each /generate produces exactly MAX_PHRASES phrases in one file.
+  Change MAX_PHRASES below to adjust the count.
 - Each user only gets their own generated file sent to their own
   chat — nothing is logged or stored anywhere.
 """
@@ -51,9 +52,8 @@ def generate_24_word_phrase() -> str:
 def handle_start(message):
     bot.reply_to(
         message,
-        "Send /generate to get one random 24-word BIP39 seed phrase "
-        "as a .txt file, or /generate <n> for multiple phrases in "
-        f"one file (up to {MAX_PHRASES:,}).\n\n"
+        f"Send /generate to get a .txt file with {MAX_PHRASES:,} random "
+        "24-word BIP39 seed phrases, one per line.\n\n"
         "⚠️ Anyone who has this file can access anything secured by "
         "any of these phrases. Don't share it, and delete it from "
         "Telegram once you've saved it somewhere safe offline.",
@@ -62,41 +62,13 @@ def handle_start(message):
 
 @bot.message_handler(commands=["generate"])
 def handle_generate(message):
-    parts = message.text.split()
-    count = 1
-
-    if len(parts) > 1:
-        try:
-            count = int(parts[1])
-        except ValueError:
-            bot.reply_to(message, "Usage: /generate or /generate <number>")
-            return
-
-        if count < 1:
-            bot.reply_to(message, "Count must be at least 1.")
-            return
-
-        if count > MAX_PHRASES:
-            bot.reply_to(
-                message,
-                f"Max is {MAX_PHRASES:,} phrases per file. "
-                f"Sending {MAX_PHRASES:,} instead.",
-            )
-            count = MAX_PHRASES
-
-    phrases = [generate_24_word_phrase() for _ in range(count)]
+    phrases = [generate_24_word_phrase() for _ in range(MAX_PHRASES)]
     content = "\n".join(phrases)
 
     file_bytes = io.BytesIO(content.encode("utf-8"))
-    file_bytes.name = "seed_phrase.txt" if count == 1 else f"seed_phrases_{count}.txt"
+    file_bytes.name = f"seed_phrases_{MAX_PHRASES}.txt"
 
-    caption = (
-        "🔑 Your 24-word BIP39 seed phrase. Keep it offline and private."
-        if count == 1
-        else f"🔑 {count:,} random 24-word BIP39 seed phrases, one per line. Keep this file offline and private."
-    )
-
-    bot.send_document(message.chat.id, file_bytes, caption=caption)
+    bot.send_document(message.chat.id, file_bytes)
 
 
 if __name__ == "__main__":
