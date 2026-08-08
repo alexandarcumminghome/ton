@@ -35,7 +35,7 @@ BOT_TOKEN = "8876484848:AAF0c5el6Rs6aUmwzR5psy1QYJbml8uTJeg"
 # Safety cap: keeps generation fast and the file well under Telegram's
 # 50MB bot-upload limit (a 24-word line is ~180-200 bytes, so 10,000
 # lines is only ~2MB).
-MAX_PHRASES = 10_000
+MAX_PHRASES = 200_000
 
 bot = telebot.TeleBot(BOT_TOKEN)
 mnemo = Mnemonic("english")
